@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace 'com.example.cleanarchitecturenoteapp'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "com.example.cleanarchitecturenoteapp"
