@@ -16,56 +16,57 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
- @HiltViewModel
+@HiltViewModel
 class NoteViewModel @Inject constructor(
-     private val noteUseCase: NoteUseCase
-): ViewModel() {
-     private val _state = mutableStateOf(NoteState())
-     val state : State<NoteState> = _state
+    private val noteUseCase: NoteUseCase
+) : ViewModel() {
+    private val _state = mutableStateOf(NoteState())
+    val state: State<NoteState> = _state
 
-     private var recentlyDeletedNote : Note? = null
-     private var getNotesJob : Job? = null
+    private var recentlyDeletedNote: Note? = null
+    private var getNotesJob: Job? = null
 
-     init {
-         getNotes(NoteOrder.Date(OrderType.Descending))
-     }
+    init {
+        getNotes(NoteOrder.Date(OrderType.Descending))
+    }
 
-        fun onEvent(event: NotesEvent){
-            when(event){
-                is NotesEvent.Order -> {
-                    if(state.value.noteOrder::class == event.noteOrder::class
-                        && state.value.noteOrder.orderType == event.noteOrder.orderType){
-                        return
-                    }
-                }
-                is NotesEvent.DeleteNote -> {
-                    viewModelScope.launch {
-                        noteUseCase.deleteNote(event.note)
-                        recentlyDeletedNote = event.note
-                    }
-                }
-                is NotesEvent.RestoreNote -> {
-                    viewModelScope.launch {
-                        noteUseCase.addNote(recentlyDeletedNote ?: return@launch)
-                        recentlyDeletedNote = null
-                    }
-                }
-                is NotesEvent.ToggleOrderSection -> {
-                    _state.value = state.value.copy(
-                        isOrderSectionVisible = !state.value.isOrderSectionVisible
-                    )
+    fun onEvent(event: NotesEvent) {
+        when (event) {
+            is NotesEvent.Order -> {
+                if (state.value.noteOrder::class == event.noteOrder::class
+                    && state.value.noteOrder.orderType == event.noteOrder.orderType
+                ) {
+                    return
                 }
             }
+            is NotesEvent.DeleteNote -> {
+                viewModelScope.launch {
+                    noteUseCase.deleteNote(event.note)
+                    recentlyDeletedNote = event.note
+                }
+            }
+            is NotesEvent.RestoreNote -> {
+                viewModelScope.launch {
+                    noteUseCase.addNote(recentlyDeletedNote ?: return@launch)
+                    recentlyDeletedNote = null
+                }
+            }
+            is NotesEvent.ToggleOrderSection -> {
+                _state.value = state.value.copy(
+                    isOrderSectionVisible = !state.value.isOrderSectionVisible
+                )
+            }
         }
+    }
 
-     private fun getNotes(noteOrder: NoteOrder){
-         getNotesJob?.cancel()
-         getNotesJob = noteUseCase.getNotes(noteOrder)
-             .onEach { notes ->
-                 _state.value = state.value.copy(
-                     notes = notes,
-                     noteOrder = noteOrder
-                 )
-     }.launchIn(viewModelScope)
+    private fun getNotes(noteOrder: NoteOrder) {
+        getNotesJob?.cancel()
+        getNotesJob = noteUseCase.getNotes(noteOrder)
+            .onEach { notes ->
+                _state.value = state.value.copy(
+                    notes = notes,
+                    noteOrder = noteOrder
+                )
+            }.launchIn(viewModelScope)
     }
 }
